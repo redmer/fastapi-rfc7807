@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastapi-rfc7807"
+version = "0.5.1"
+description = "FastAPI middleware for RFC-7807 compliant error responses"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "GPL-3.0"
+license-files = ["LICENSE"]
+authors = [
+    { name="Erick Daniszewski", email="erick@vapor.io" }
+]
+
+dependencies = [
+    "fastapi>=0.118.0",
+]
+keywords = [
+    "fastapi",
+    "errors",
+    "middleware",
+    "rfc7807"
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Repostitory = 'https://github.com/vapor-ware/fastapi-rfc7807.git'
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+]
