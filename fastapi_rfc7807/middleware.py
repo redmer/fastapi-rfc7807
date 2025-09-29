@@ -6,18 +6,14 @@ For details on the Problem format, see: https://tools.ietf.org/html/rfc7807
 import asyncio
 import http
 import json
-from typing import (Any, Awaitable, Callable, Dict, Mapping, Optional,
-                    Sequence, Union)
+from typing import Any, Awaitable, Callable, Dict, Mapping, Optional, Sequence, Union
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from fastapi.openapi.utils import get_model_definitions, get_openapi
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
-
-from . import schema
 
 PreHook = Callable[[Request, Exception], Union[Any, Awaitable[Any]]]
 PostHook = Callable[[Request, Response, Exception], Union[Any, Awaitable[Any]]]
@@ -26,7 +22,7 @@ PostHook = Callable[[Request, Response, Exception], Union[Any, Awaitable[Any]]]
 class ProblemResponse(Response):
     """A Response for RFC7807 Problems."""
 
-    media_type: str = 'application/problem+json'
+    media_type: str = "application/problem+json"
 
     def __init__(self, *args, debug: bool = False, **kwargs) -> None:
         self.debug: bool = debug
@@ -34,7 +30,7 @@ class ProblemResponse(Response):
 
     def init_headers(self, headers: Mapping[str, str] = None) -> None:
         h = dict(headers) if headers else {}
-        if hasattr(self, 'problem') and self.problem.headers:
+        if hasattr(self, "problem") and self.problem.headers:
             h.update(self.problem.headers)
 
         super(ProblemResponse, self).init_headers(h)
@@ -54,8 +50,8 @@ class ProblemResponse(Response):
         else:
             p = Problem(
                 status=500,
-                title='Application Error',
-                detail='Got unexpected content when trying to generate error response',
+                title="Application Error",
+                detail="Got unexpected content when trying to generate error response",
                 content=str(content),
             )
 
@@ -88,15 +84,15 @@ class Problem(Exception):
     headers: Dict[str, str] = {}
 
     def __init__(
-            self,
-            type: Optional[str] = None,
-            title: Optional[str] = None,
-            status: Optional[int] = None,
-            detail: Optional[str] = None,
-            instance: Optional[str] = None,
-            **kwargs,
+        self,
+        type: Optional[str] = None,
+        title: Optional[str] = None,
+        status: Optional[int] = None,
+        detail: Optional[str] = None,
+        instance: Optional[str] = None,
+        **kwargs,
     ) -> None:
-        self.type: str = type or 'about:blank'
+        self.type: str = type or "about:blank"
         self.status: int = status or 500
         self.title: str = title or http.HTTPStatus(self.status).phrase
         self.detail: Optional[str] = detail
@@ -119,15 +115,15 @@ class Problem(Exception):
                 ensure_ascii=False,
                 allow_nan=False,
                 indent=2,
-            ).encode('utf-8')
+            ).encode("utf-8")
         else:
             return json.dumps(
                 self.to_dict(),
                 ensure_ascii=False,
                 allow_nan=False,
                 indent=None,
-                separators=(',', ':'),
-            ).encode('utf-8')
+                separators=(",", ":"),
+            ).encode("utf-8")
 
     def to_dict(self) -> Dict[str, Any]:
         """Get a dictionary representation of the Problem response.
@@ -144,19 +140,19 @@ class Problem(Exception):
         d.update(self.kwargs)
 
         if self.type:
-            d['type'] = str(self.type)
+            d["type"] = str(self.type)
         if self.title:
-            d['title'] = str(self.title)
+            d["title"] = str(self.title)
         if self.status:
-            d['status'] = int(self.status)
+            d["status"] = int(self.status)
         if self.detail:
-            d['detail'] = str(self.detail)
+            d["detail"] = str(self.detail)
         if self.instance:
-            d['instance'] = str(self.instance)
+            d["instance"] = str(self.instance)
         return d
 
     def __str__(self) -> str:
-        return str(f'Problem:<{self.to_dict()}>')
+        return str(f"Problem:<{self.to_dict()}>")
 
     def __repr__(self) -> str:
         return str(self)
@@ -221,9 +217,9 @@ def from_request_validation_error(exc: RequestValidationError) -> Problem:
          A new Problem instance populated from the RequestValidationError.
     """
     return Problem(
-        title='Validation Error',
+        title="Validation Error",
         status=400,
-        detail='One or more user-provided parameters are invalid',
+        detail="One or more user-provided parameters are invalid",
         errors=exc.errors(),
     )
 
@@ -250,7 +246,7 @@ def from_exception(exc: Exception) -> Problem:
         A new Problem instance populated from the Exception.
     """
     return Problem(
-        title='Unexpected Server Error',
+        title="Unexpected Server Error",
         status=500,
         detail=str(exc),
         exc_type=exc.__class__.__name__,
@@ -258,9 +254,9 @@ def from_exception(exc: Exception) -> Problem:
 
 
 def get_exception_handler(
-        debug: bool = False,
-        pre_hooks: Optional[Sequence[PreHook]] = None,
-        post_hooks: Optional[Sequence[PostHook]] = None,
+    debug: bool = False,
+    pre_hooks: Optional[Sequence[PreHook]] = None,
+    post_hooks: Optional[Sequence[PostHook]] = None,
 ) -> Callable:
     """A custom FastAPI exception handler constructor.
 
@@ -284,6 +280,7 @@ def get_exception_handler(
         pre_hooks: Functions which are run before generating a response.
         post_hooks: Functions which are run after generating a response.
     """
+
     async def exception_handler(request: Request, exc: Exception) -> ProblemResponse:
         nonlocal debug, pre_hooks, post_hooks
 
@@ -292,10 +289,13 @@ def get_exception_handler(
         await exec_hooks(post_hooks, request, response, exc)
 
         return response
+
     return exception_handler
 
 
-async def exec_hooks(hooks: Optional[Sequence[Union[PreHook, PostHook]]], *args) -> None:
+async def exec_hooks(
+    hooks: Optional[Sequence[Union[PreHook, PostHook]]], *args
+) -> None:
     """Helper function to execute hooks, if any are defined.
 
     Args:
@@ -314,7 +314,6 @@ def register(
     app: FastAPI,
     pre_hooks: Optional[Sequence[PreHook]] = None,
     post_hooks: Optional[Sequence[PostHook]] = None,
-    add_schema: Union[str, bool] = False,
 ) -> None:
     """Register the FastAPI RFC7807 middleware with a FastAPI application instance.
 
@@ -376,45 +375,16 @@ def register(
         app: The FastAPI application instance to register with.
         pre_hooks: Functions which are run before generating a response.
         post_hooks: Functions which are run after generating a response.
-        add_schema: Add the Problem pydantic model as a schema to the application's
-            OpenAPI definitions. If this is a string, it will be added to the
-            schema using the string as the name.
     """
-    _handler = get_exception_handler(debug=app.debug, pre_hooks=pre_hooks, post_hooks=post_hooks)
+    _handler = get_exception_handler(
+        debug=app.debug, pre_hooks=pre_hooks, post_hooks=post_hooks
+    )
 
     app.add_exception_handler(HTTPException, _handler)
     app.add_exception_handler(RequestValidationError, _handler)
-    app.add_middleware(ProblemMiddleware, debug=app.debug, pre_hooks=pre_hooks, post_hooks=post_hooks)
-
-    if add_schema:
-        if isinstance(add_schema, str):
-            name = add_schema
-        else:
-            name = 'Problem'
-
-        # Override the built-in OpenAPI docs generator with the wrapper.
-        # This allows the RFC7807 Problem schema to be added in, so it can be
-        # referenced in API route metadata.
-        def wrap_openapi() -> Dict:
-            if not app.openapi_schema:
-                app.openapi_schema = get_openapi(
-                    title=app.title,
-                    version=app.version,
-                    openapi_version=app.openapi_version,
-                    description=app.description,
-                    routes=app.routes,
-                    tags=app.openapi_tags,
-                    servers=app.servers,
-                )
-
-            app.openapi_schema.setdefault('components', {}).setdefault('schemas', {}).update(
-                get_model_definitions(
-                    flat_models={schema.Problem},
-                    model_name_map={schema.Problem: name},
-                ),
-            )
-            return app.openapi_schema
-        app.openapi = wrap_openapi  # type: ignore
+    app.add_middleware(
+        ProblemMiddleware, debug=app.debug, pre_hooks=pre_hooks, post_hooks=post_hooks
+    )
 
 
 class ProblemMiddleware:
@@ -427,11 +397,11 @@ class ProblemMiddleware:
     """
 
     def __init__(
-            self,
-            app: ASGIApp,
-            debug: bool = False,
-            pre_hooks: Optional[Sequence[PreHook]] = None,
-            post_hooks: Optional[Sequence[PostHook]] = None,
+        self,
+        app: ASGIApp,
+        debug: bool = False,
+        pre_hooks: Optional[Sequence[PreHook]] = None,
+        post_hooks: Optional[Sequence[PostHook]] = None,
     ) -> None:
         self.app: ASGIApp = app
         self.pre_hooks = pre_hooks or []
@@ -446,7 +416,7 @@ class ProblemMiddleware:
 
     # See: starlette.middleware.errors.ServerErrorMiddleware
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope['type'] != 'http':
+        if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
@@ -455,7 +425,7 @@ class ProblemMiddleware:
         async def _send(message: Message) -> None:
             nonlocal response_started, send
 
-            if message['type'] == 'http.response.start':
+            if message["type"] == "http.response.start":
                 response_started = True
             await send(message)
 
